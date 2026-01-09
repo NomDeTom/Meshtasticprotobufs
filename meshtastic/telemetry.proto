@@ -795,6 +795,11 @@ enum TelemetrySensorType {
    * BH1750 light sensor
    */
   BH1750 = 45;
+
+  /*
+   * Low accuracy current and voltage during charging
+   */
+  BQ25895 = 46;
 }
 
 /*
