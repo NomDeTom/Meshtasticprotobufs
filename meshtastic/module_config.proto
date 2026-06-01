@@ -940,6 +940,11 @@ message ModuleConfig {
      * TAK team/role configuration for TAK_TRACKER
      */
     TAKConfig tak = 16;
+https://github.com/nomdetom/meshtasticprotobufs
+    /*
+     * Hop scaling module config for adaptive hop-limit tuning
+     */
+    HopScalingConfig hop_scaling = 17;
   }
 
   /*
@@ -956,6 +961,67 @@ message ModuleConfig {
      * Default Unspecifed -> firmware uses TeamMember
      */
     MemberRole role = 2;
+  }
+
+  /*
+   * Hop Scaling module config.
+   * Controls adaptive hop-limit tuning based on a sampled per-hop histogram of
+   * overheard nodes.  When enabled the module reduces hop_limit on outgoing
+   * broadcast packets to the minimum required to reach the configured target
+   * population, avoiding unnecessary mesh-wide propagation on dense networks.
+   */
+  message HopScalingConfig {
+    /*
+     * Enable the hop scaling module.
+     * When false the module still collects histogram data but does not modify
+     * hop_limit on outgoing packets.
+     */
+    bool enabled = 1;
+
+    /*
+     * Minimum cumulative affected-node count used when walking the hop-distance
+     * histogram to determine the recommended hop limit.  The hop walk stops at
+     * the first hop distance whose cumulative scaled node count reaches this
+     * value.  Higher values keep more hops; lower values reduce them sooner.
+     * 0 = firmware default (40).
+     */
+    uint32 min_target_nodes = 2;
+
+    /*
+     * Maximum cumulative node count allowed when considering a one-hop extension
+     * beyond the minimum target.  Acts as a ceiling on the generous extension
+     * check: the extra hop is only taken when the new cumulative count does not
+     * exceed this value.  0 = firmware default (2 × min_target_nodes, i.e. 80
+     * when min_target_nodes is at its default of 40).
+     */
+    uint32 max_target_nodes = 3;
+
+    /*
+     * Minimum hop limit enforced on outgoing packets regardless of the histogram
+     * recommendation.  0 = rely on the role-based floor (TRACKER=2, SENSOR=1,
+     * all others=0).  Valid range 0–7; values above HOP_MAX are clamped.
+     */
+    uint32 hop_limit_floor = 4;
+
+    /*
+     * Exclude TELEMETRY_APP packets from hop-limit adjustment.
+     */
+    bool skip_telemetry = 5;
+
+    /*
+     * Exclude POSITION_APP packets from hop-limit adjustment.
+     */
+    bool skip_position = 6;
+
+    /*
+     * Exclude NODEINFO_APP packets from hop-limit adjustment.
+     */
+    bool skip_nodeinfo = 7;
+
+    /*
+     * Exclude NEIGHBORINFO_APP packets from hop-limit adjustment.
+     */
+    bool skip_neighborinfo = 8;
   }
 }
 
