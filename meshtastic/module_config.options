@@ -29,3 +29,7 @@
 *DetectionSensorConfig.detection_trigger_type max_size:8
 
 *StatusMessageConfig.node_status max_size:80
+
+*HopScalingConfig.hop_limit_floor int_size:8
+*HopScalingConfig.min_target_nodes int_size:16
+*HopScalingConfig.max_target_nodes int_size:16
