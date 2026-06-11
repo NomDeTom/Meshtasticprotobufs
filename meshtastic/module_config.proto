@@ -371,6 +371,54 @@ message ModuleConfig {
      * Preserve hop_limit for router-to-router traffic
      */
     bool router_preserve_hops = 14;
+
+    /*
+     * Extra hops granted to other nodes' broadcasts beyond our own
+     * hop-scaling recommendation before exhaustion applies.
+     * 0 = compiled default (1). Clamped to 1..2.
+     */
+    uint32 hop_grace = 15;
+
+    /*
+     * Enable per-port frequency policing of routine broadcasts
+     * (position/telemetry/nodeinfo) on well-known channels.
+     */
+    bool port_interval_enabled = 16;
+
+    /*
+     * Fraction (in eighths) of the sender-role's own scaled broadcast
+     * interval that other nodes must respect before hop exhaustion.
+     * 0 = compiled default (4 = half our interval, twice our frequency).
+     */
+    uint32 port_interval_permissiveness = 17;
+
+    /*
+     * Clamp the precision of relayed position broadcasts on well-known
+     * channels (single-byte or absent PSK with a default preset name).
+     * Disabled entirely in ham mode (owner.is_licensed).
+     */
+    bool precision_clamp_enabled = 18;
+
+    /*
+     * Maximum precision bits allowed on relayed positions before clamping.
+     * 0 = compiled default (13, ~1.5 km). Sanitized to 10..32.
+     */
+    uint32 precision_clamp_bits = 19;
+
+    /*
+     * Rudeness threshold for the politeness ladder, fixed point x8:
+     * rudeness = (observed_rate / allowed_rate) * (hop_start / suggested_hops).
+     * Exhaust hops above threshold, drop above 2x threshold. Only evaluated
+     * on an active mesh. 0 = compiled default (12 = 1.5).
+     */
+    uint32 politeness_threshold = 20;
+
+    /*
+     * Apply port-interval policing and precision clamping to channels with
+     * user-supplied (high-entropy) PSKs as well. Default off: traffic we
+     * were trusted with via private keys is not shaped or rewritten.
+     */
+    bool apply_to_private_channels = 21;
   }
 
   /*

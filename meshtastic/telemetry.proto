@@ -493,6 +493,32 @@ message TrafficManagementStats {
    * Number of times router hop preservation was applied
    */
   uint32 router_hops_preserved = 7;
+
+  /*
+   * Number of relayed broadcasts hop-exhausted for exceeding their
+   * sender-role per-port frequency allowance
+   */
+  uint32 port_interval_exhausts = 8;
+
+  /*
+   * Number of relayed position payloads rewritten to the precision ceiling
+   */
+  uint32 precision_clamps = 9;
+
+  /*
+   * Number of relayed broadcasts hop-exhausted by the politeness ladder
+   */
+  uint32 politeness_exhausts = 10;
+
+  /*
+   * Number of relayed broadcasts dropped by the politeness ladder
+   */
+  uint32 politeness_drops = 11;
+
+  /*
+   * Number of routine broadcasts dropped from deprecated-role senders
+   */
+  uint32 deprecated_role_drops = 12;
 }
 
 /*
