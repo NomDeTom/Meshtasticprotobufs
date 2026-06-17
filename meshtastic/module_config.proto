@@ -371,6 +371,27 @@ message ModuleConfig {
      * Preserve hop_limit for router-to-router traffic
      */
     bool router_preserve_hops = 14;
+
+    /*
+     * Enable hop-trimming of relayed broadcasts to the local hop-scaling cap plus grace.
+     * When enabled, packets relayed on public (or private with apply_to_private_channels)
+     * channels have their hop_limit clamped so they travel no further than the local mesh
+     * requires. Default true (disable by setting hop_trim_disabled = true).
+     */
+    bool hop_trim_disabled = 15;
+
+    /*
+     * Base extra-hop grace budget added on top of the local hop-scaling cap before
+     * hop-trimming engages. Infra/specialty senders receive an additional +1.
+     * 0 = use firmware default (2).
+     */
+    uint32 hop_trim_grace = 16;
+
+    /*
+     * Extend position dedup, precision clamping, and hop-trimming to private
+     * (non-well-known-key) channels. Default false (well-known public channels only).
+     */
+    bool apply_to_private_channels = 17;
   }
 
   /*
