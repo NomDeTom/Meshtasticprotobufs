@@ -487,6 +487,34 @@ message Config {
      * Note: we picked an ID of 32 so that lower more efficient IDs can be used for more frequently used options.
      */
     uint64 powermon_enables = 32;
+
+    /*
+     * NRF52 only. Bitmask flags controlling firmware-managed low-VDD power control, for boards
+     * where the VDD reading is unreliable and the protections cause spurious boot stalls.
+     */
+    enum Nrf52PowerFlags {
+      /*
+       * All low-VDD protections enabled (default).
+       */
+      NRF52_POWER_DEFAULT = 0x0;
+
+      /*
+       * Disable all firmware-managed low-VDD power control at once: the boot-time
+       * "wait until supply voltage is safe" hold, the low-voltage flash-write gating,
+       * and the wake-on-VDD System-OFF (sleep-until-voltage-improves) behavior.
+       */
+      NRF52_POWER_DISABLE_ALL = 0x1;
+
+      // Reserved for future per-behavior control (the master bit above stays authoritative):
+      //   NRF52_POWER_DISABLE_BOOT_HOLD   = 0x2;
+      //   NRF52_POWER_DISABLE_WRITE_GATE  = 0x4;
+      //   NRF52_POWER_DISABLE_WAKE_ON_VDD = 0x8;
+    }
+
+    /*
+     * NRF52 only. Bitmask of Nrf52PowerFlags. Default (0) keeps all low-VDD protections enabled.
+     */
+    uint32 nrf52_power_flags = 10;
   }
 
   /*
