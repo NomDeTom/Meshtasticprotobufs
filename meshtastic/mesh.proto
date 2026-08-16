@@ -1313,6 +1313,40 @@ message StoreForwardPlusPlus {
      * If we must fragment, send the second half
      */
     LINK_PROVIDE_SECONDHALF = 6;
+
+    /*
+     * Summarise one bucket: its member count, checksum and sketch.
+     * Also serves as discovery - the sender is the enclosing packet's sender.
+     */
+    ADVERT = 7;
+
+    /*
+     * Request the objects named by a set of short IDs, usually the ones an
+     * ADVERT exchange decoded as missing.
+     */
+    ITEM_REQUEST = 8;
+
+    /*
+     * Provide one object, in the same encoding the chain messages use.
+     */
+    ITEM_PROVIDE = 9;
+
+    /*
+     * Ask for a bucket's full short-ID list. Escalation after a checksum
+     * mismatch, or after a sketch that would not decode.
+     */
+    ENUM_REQUEST = 10;
+
+    /*
+     * The full short-ID list for one bucket.
+     */
+    ENUM_PROVIDE = 11;
+
+    /*
+     * Signed retention checkpoint: everything below this bucket is gone, so
+     * stop asking for it.
+     */
+    GONE = 12;
   }
 
   /*
@@ -1332,11 +1366,18 @@ message StoreForwardPlusPlus {
 
   /*
    * the root hash of a chain
+   * On ADVERT through GONE this is the reconciliation scope, which is the same
+   * thing named differently: the chain root already identifies the channel a
+   * bucket covers, and a partial hash resolves through the same mappings.
    */
   bytes root_hash = 4;
 
   /*
    * The encrypted bytes from a message
+   * On an ADVERT this instead carries the sketch: odd power sums over
+   * GF(2^32), four bytes per unit of capacity, little-endian per element. XOR
+   * two of them and the result is the sketch of the symmetric difference.
+   * Capacity 32 is 128 bytes, well inside this field's bound.
    */
   bytes message = 5;
 
@@ -1362,8 +1403,57 @@ message StoreForwardPlusPlus {
 
   /*
    * Used in a LINK_REQUEST to specify the message X spots back from head
+   * On ADVERT through GONE this is the bucket index, which is the same counter
+   * quantised: buckets close on a fixed object count, so both sides derive the
+   * index from the chain counter rather than from local time.
    */
   uint32 chain_count = 10;
+
+  /*
+   * Which derivation produced the set-reconciliation fields: the hash, the
+   * short-ID width, the checksum domain string, the bucket size and the
+   * counter origin. All of them must match before a decoded difference means
+   * anything, so one number covers the lot and any change to any of them is a
+   * bump. Required on ADVERT through GONE; zero is invalid rather than
+   * defaulting to 1. A receiver that does not implement the stated version
+   * discards the message rather than parsing it under its own rules.
+   */
+  uint32 sr_version = 11;
+
+  /*
+   * Members in the bucket. Sizing only, never correctness: a peer learns a
+   * lower bound on how much the two sides differ by before building anything.
+   */
+  uint32 sr_count = 12;
+
+  /*
+   * Fragment position for a message that did not fit one frame: index in bits
+   * 0-7, total in bits 8-15. Absent means single-frame. A receiver missing any
+   * index discards the whole set - a truncated sketch decodes to a confident
+   * wrong answer, which is worse than the loss.
+   */
+  uint32 sr_frame = 13;
+
+  /*
+   * XOR of every member's checksum contribution. Fixed rather than varint
+   * because it is uniformly random, so a varint would cost 9-10 bytes every
+   * time. This is what proves two sides hold the same set: short IDs are
+   * truncated and collide, and a colliding pair cancels inside the sketch.
+   */
+  fixed64 sr_checksum = 14;
+
+  /*
+   * Short IDs, in an ITEM_REQUEST naming what is wanted or in an ENUM_PROVIDE
+   * enumerating a bucket. Zero is not a representable member.
+   */
+  repeated fixed32 sr_short_ids = 15;
+
+  /*
+   * Signature over the message. Only GONE requires one: it is the message that
+   * means "stop asking", so an unsigned one denies service against a bucket
+   * that still exists.
+   */
+  bytes sr_signature = 16;
 }
 
 /*

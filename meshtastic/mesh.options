@@ -77,7 +77,11 @@
 *StoreForwardPlusPlus.message_hash max_size:32
 *StoreForwardPlusPlus.commit_hash max_size:32
 *StoreForwardPlusPlus.root_hash max_size:32
+# Also carries an ADVERT's sketch: 128 bytes at capacity 32.
 *StoreForwardPlusPlus.message max_size:240
+# 40 short IDs is a full bucket and more, in one frame.
+*StoreForwardPlusPlus.sr_short_ids max_count:40
+*StoreForwardPlusPlus.sr_signature max_size:64
 
 *RemoteShell.payload max_size:200
 
