@@ -312,6 +312,13 @@ message ModuleConfig {
      * BLE RSSI threshold. Defaults to -80
      */
     int32 ble_threshold = 4;
+
+    /*
+     * Destination for routine paxcounter broadcasts. 0 = broadcast.
+     * Paxcounter is not made promiscuous, so a directed paxcounter packet is consumed by its
+     * target and by nothing else on the mesh.
+     */
+    uint32 paxcounter_dest = 5;
   }
 
   /*
@@ -698,6 +705,81 @@ message ModuleConfig {
      * Enable/Disable the air quality telemetry measurement module on-device display
      */
     bool air_quality_screen_enabled = 15;
+
+    /*
+     * Destination for routine device telemetry.
+     * 0 (the default) broadcasts, preserving the historic behaviour. Any other value sends
+     * routine telemetry of this sub-type to that node only. A destination does not enable a
+     * sub-type: the matching *_enabled flag still governs whether anything is sent at all.
+     */
+    uint32 device_dest = 16;
+
+    /*
+     * Destination for routine environment telemetry. 0 = broadcast.
+     */
+    uint32 environment_dest = 17;
+
+    /*
+     * Destination for routine air quality telemetry. 0 = broadcast.
+     */
+    uint32 air_quality_dest = 18;
+
+    /*
+     * Destination for routine power telemetry. 0 = broadcast.
+     */
+    uint32 power_dest = 19;
+
+    /*
+     * Destination for routine health telemetry. 0 = broadcast.
+     * Health is not made promiscuous, so a directed health packet is consumed by its target
+     * and by nothing else on the mesh.
+     */
+    uint32 health_dest = 20;
+
+    /*
+     * Bit field of telemetry policy options (bitwise OR of TelemetryFlags).
+     * Every bit is a restriction, so 0 is exactly the historic behaviour.
+     */
+    uint32 telemetry_flags = 21;
+
+    /*
+     * Policy bits for telemetry sends and replies. Each bit restricts; none is required to
+     * preserve current behaviour, so firmware that does not understand this field is unaffected.
+     */
+    enum TelemetryFlags {
+      /*
+       * Required for compilation
+       */
+      UNSET = 0x0000;
+
+      /*
+       * Directed telemetry must be PKI-encrypted; no channel-PSK fallback.
+       * If the destination's public key is unknown the send fails rather than downgrading.
+       */
+      ALWAYS_PKC = 0x0001;
+
+      /*
+       * Directed telemetry always uses the channel PSK, never PKI.
+       * If both this and ALWAYS_PKC are set, ALWAYS_PKC wins - an accidental downgrade to a
+       * channel-readable payload is the worse failure.
+       */
+      NEVER_PKC = 0x0002;
+
+      /*
+       * Do not answer telemetry requests from anyone.
+       */
+      NO_ADHOC_REPLY = 0x0004;
+
+      /*
+       * Answer telemetry requests only from the configured destination.
+       */
+      REPLY_ONLY_TO_DEST = 0x0008;
+
+      /*
+       * Answer telemetry requests only from nodes marked favourite.
+       */
+      REPLY_TO_FAVOURITES_ONLY = 0x0010;
+    }
   }
 
   /*

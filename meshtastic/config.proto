@@ -424,6 +424,14 @@ message Config {
      * Set where GPS is enabled, disabled, or not present
      */
     GpsMode gps_mode = 13;
+
+    /*
+     * Destination for routine position broadcasts.
+     * 0 (the default) broadcasts, preserving the historic behaviour. Any other value sends
+     * routine position to that node only. Ad-hoc replies to position requests are unaffected;
+     * they continue to answer the requester.
+     */
+    uint32 position_dest = 14;
   }
 
   /*
