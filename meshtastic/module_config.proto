@@ -146,6 +146,13 @@ message ModuleConfig {
      * Note that this is not available on a channel with default key and name.
      */
     bool transmit_over_lora = 3;
+
+    /*
+     * NeighborInfo policy: who may poll us, how a directed reply is encrypted (bitwise OR of
+     * PortPolicyFlags). 0 is today's behaviour. There is no routine destination, so
+     * REPLY_ONLY_TO_DEST refuses everyone on the mesh.
+     */
+    uint32 policy_flags = 4;
   }
 
   /*
@@ -316,9 +323,15 @@ message ModuleConfig {
     /*
      * Destination for routine paxcounter broadcasts. 0 = broadcast.
      * Paxcounter is not made promiscuous, so a directed paxcounter packet is consumed by its
-     * target and by nothing else on the mesh. Its crypto follows TelemetryConfig.telemetry_flags.
+     * target and by nothing else on the mesh.
      */
     uint32 paxcounter_dest = 5;
+
+    /*
+     * Paxcounter policy: who may poll the count, how a directed count is encrypted (bitwise OR
+     * of PortPolicyFlags). 0 is today's behaviour.
+     */
+    uint32 policy_flags = 6;
   }
 
   /*
@@ -732,56 +745,16 @@ message ModuleConfig {
     /*
      * Destination for routine health telemetry. 0 = broadcast.
      * Health is not made promiscuous, so a directed health packet is consumed by its target
-     * and by nothing else on the mesh. Without ALWAYS_PKC it still goes out on the channel PSK
-     * whenever the destination's public key is not held; set ALWAYS_PKC if that matters.
+     * and by nothing else on the mesh. Without PKC_ALWAYS it still goes out on the channel PSK
+     * whenever the destination's public key is not held; set PKC_ALWAYS if that matters.
      */
     uint32 health_dest = 20;
 
     /*
-     * Bit field of telemetry policy options (bitwise OR of TelemetryFlags).
-     * Every bit is a restriction, so 0 is exactly the historic behaviour.
+     * Telemetry policy, every sub-type: who may poll us, how a directed telemetry packet is
+     * encrypted (bitwise OR of PortPolicyFlags). 0 is today's behaviour.
      */
-    uint32 telemetry_flags = 21;
-
-    /*
-     * Policy bits for telemetry sends and replies. Each bit restricts; none is required to
-     * preserve current behaviour, so firmware that does not understand this field is unaffected.
-     */
-    enum TelemetryFlags {
-      /*
-       * Required for compilation
-       */
-      UNSET = 0x0000;
-
-      /*
-       * Directed telemetry and paxcounter must be PKI-encrypted. Without this flag a destination
-       * whose public key is not held gets the channel PSK; with it the send fails instead, and
-       * the admin API refuses a destination whose key is not in the node DB.
-       */
-      ALWAYS_PKC = 0x0001;
-
-      /*
-       * Directed telemetry and paxcounter always use the channel PSK, never PKI, replies to
-       * telemetry requests included. If both this and ALWAYS_PKC are set, ALWAYS_PKC wins - an
-       * accidental downgrade to a channel-readable payload is the worse failure.
-       */
-      NEVER_PKC = 0x0002;
-
-      /*
-       * Do not answer telemetry requests from anyone.
-       */
-      NO_ADHOC_REPLY = 0x0004;
-
-      /*
-       * Answer telemetry requests only from the configured destination.
-       */
-      REPLY_ONLY_TO_DEST = 0x0008;
-
-      /*
-       * Answer telemetry requests only from nodes marked favourite.
-       */
-      REPLY_TO_FAVOURITES_ONLY = 0x0010;
-    }
+    uint32 policy_flags = 21;
   }
 
   /*

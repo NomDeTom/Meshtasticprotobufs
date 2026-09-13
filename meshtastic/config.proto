@@ -10,6 +10,47 @@ option java_outer_classname = "ConfigProtos";
 option java_package = "org.meshtastic.proto";
 option swift_prefix = "";
 
+/*
+ * Policy for a packet type this node sends on request or on a timer, one field per port.
+ * Every bit restricts, so 0 is today's behaviour: answer everyone, PKI when the destination's
+ * key is held, else the channel PSK. Bits 0-3 say who may poll us; bits 4-7 say how a unicast on
+ * the port is encrypted, routine sends and replies alike. Ignored nodes are refused regardless,
+ * and a request carrying our own node number is the phone and is never refused.
+ */
+enum PortPolicyFlags {
+  /*
+   * Required for compilation
+   */
+  PORT_POLICY_UNSET = 0x0000;
+
+  /*
+   * Do not answer requests from anyone on the mesh.
+   */
+  NO_ADHOC_REPLY = 0x0001;
+
+  /*
+   * Answer requests only from the configured routine destination. With no destination
+   * configured (or none for this packet type) nobody satisfies this.
+   */
+  REPLY_ONLY_TO_DEST = 0x0002;
+
+  /*
+   * Answer requests only from nodes marked favourite.
+   */
+  REPLY_TO_FAVOURITES_ONLY = 0x0004;
+
+  /*
+   * PKI only. A destination whose public key is not held fails to send, and the admin API
+   * refuses a routine destination whose key is not in the node DB.
+   */
+  PKC_ALWAYS = 0x0010;
+
+  /*
+   * Channel PSK only, never PKI. If both this and PKC_ALWAYS are set, PKC_ALWAYS applies.
+   */
+  PKC_NEVER = 0x0020;
+}
+
 message Config {
   /*
    * Configuration
@@ -432,6 +473,12 @@ message Config {
      * they continue to answer the requester.
      */
     uint32 position_dest = 14;
+
+    /*
+     * Position policy: who may poll us, how a directed position is encrypted (bitwise OR of
+     * PortPolicyFlags). 0 is today's behaviour.
+     */
+    uint32 policy_flags = 15;
   }
 
   /*
